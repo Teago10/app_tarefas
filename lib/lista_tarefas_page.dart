@@ -1,18 +1,72 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 
-class ListaTarefa extends StatelessWidget {
+class ListaTarefa extends StatefulWidget {
   ListaTarefa({super.key});
 
+  @override
+  State<ListaTarefa> createState() => _ListaTarefaState();
+}
+
+class _ListaTarefaState extends State<ListaTarefa> {
   final List<Map<String, dynamic>> tarefas = [
     
-      {'titulo': 'Configuração do ambiente', 'situacao': true},
-      {'titulo': 'Fazer compras', 'situacao': false},
-      {'titulo': 'Estudar Inglês', 'situacao': false},
-      {'titulo': 'Pagar a Fatura', 'situacao': true},
-      {'titulo': 'Fazer Compras', 'situacao': true},
-      {'titulo': 'Sair as 22h00', 'situacao':false},
-
   ];
+
+  //Marcar tarefa como concluida/Pendente
+
+  void marcarSituacao(int index){
+    setState(() {
+      tarefas[index]['situacao'] = !tarefas[index]['situacao'];
+    });
+  }
+
+  //Remover tarefa
+  void removerTarefa(int index){
+    setState(() {
+      tarefas.removeAt(index);
+    });
+  }
+
+  //Adicionar Tarefa
+  void adicionarTarefa(){
+
+    final adicinarController = TextEditingController();
+
+    showDialog(context: context, builder: (context) {
+      return AlertDialog(
+        title: Text('Nova Tarefa'),
+        content: TextField(
+          controller: adicinarController,
+          decoration: InputDecoration(hintText: 'Digite sua Tarefa'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text('Cancelar')
+            ),
+          TextButton(
+            onPressed: (){
+              if(adicinarController.text.isNotEmpty){
+                setState(() {
+                  tarefas.add(
+                    {
+                      'titulo': adicinarController.text,
+                      'situacao': false
+                    }
+                  );
+                });
+                Navigator.pop(context);
+              }
+            }, 
+            child: Text('Adicionar')
+            ),
+        ],
+      );
+    }
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +75,14 @@ class ListaTarefa extends StatelessWidget {
         title: Text("Minhas tarefas"),
         centerTitle: true,
       ),
-      body: ListView.builder(
+      body: tarefas.isEmpty 
+        ? Center(
+          child: Text(
+            'Nenhuma Tarefa Encontrada',
+            style: TextStyle(fontSize: 20, color: Colors.grey),
+          ),
+        )
+        : ListView.builder(
         padding: EdgeInsets.all(12),
         itemCount: tarefas.length,
         itemBuilder: (context, index) {
@@ -32,9 +93,12 @@ class ListaTarefa extends StatelessWidget {
           return Card(
             margin: EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
-              leading: Icon(
-                situacao ? Icons.check_circle : Icons.circle_outlined, 
-                color: situacao ? Colors.green : Colors.redAccent,
+              leading: GestureDetector(
+                onTap: () => marcarSituacao(index),
+                child: Icon(
+                  situacao ? Icons.check_circle : Icons.circle_outlined, 
+                  color: situacao ? Colors.green : Colors.redAccent,
+                ),
               ),
               title: Text(
                 tarefa['titulo'], 
@@ -43,9 +107,12 @@ class ListaTarefa extends StatelessWidget {
                 ),
               ),
               subtitle: situacao ? Text('Concluida') : Text('Pendente'),
-              trailing: Icon(
-                Icons.delete_outline,
-                color: Colors.grey,
+              trailing: GestureDetector(
+                onTap: () => removerTarefa(index),
+                child: Icon(
+                  Icons.delete_outline,
+                  color: Colors.grey,
+                ),
               ),
             ),
           );
@@ -56,7 +123,8 @@ class ListaTarefa extends StatelessWidget {
         
       ),
 
-      floatingActionButton: FloatingActionButton(onPressed: () {},
+      floatingActionButton: FloatingActionButton(
+        onPressed: adicionarTarefa,
         shape: CircleBorder(),  //deixa o botão redondo
         child: Icon(Icons.add),
       ),
