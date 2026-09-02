@@ -1,6 +1,8 @@
 import 'dart:ffi';
 
+import 'package:app_tarefas/database_helper.dart';
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqlite_api.dart';
 
 class ListaTarefa extends StatefulWidget {
   ListaTarefa({super.key});
@@ -10,9 +12,23 @@ class ListaTarefa extends StatefulWidget {
 }
 
 class _ListaTarefaState extends State<ListaTarefa> {
-  final List<Map<String, dynamic>> tarefas = [
+  List<Map<String, dynamic>> tarefas = [
     
   ];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    carregarTarefas();
+  }
+
+  void carregarTarefas() async{
+    final dados = await DatabaseHelper.buscarTarefas();
+    setState(() {
+      tarefas = dados;
+    });
+  }
 
   //Marcar tarefa como concluida/Pendente
 
@@ -47,16 +63,15 @@ class _ListaTarefaState extends State<ListaTarefa> {
             child: Text('Cancelar')
             ),
           TextButton(
-            onPressed: (){
+            onPressed: () async {
               if(adicinarController.text.isNotEmpty){
-                setState(() {
-                  tarefas.add(
-                    {
-                      'titulo': adicinarController.text,
-                      'situacao': false
-                    }
-                  );
-                });
+                
+                await DatabaseHelper.inserirTarefa(adicinarController.text);
+
+                carregarTarefas();
+
+                if(!context.mounted) return;
+
                 Navigator.pop(context);
               }
             }, 
@@ -88,7 +103,7 @@ class _ListaTarefaState extends State<ListaTarefa> {
         itemBuilder: (context, index) {
 
           final tarefa = tarefas[index];
-          final bool situacao = tarefa['situacao'];
+          final bool situacao = tarefa['situacao'] == 1;
 
           return Card(
             margin: EdgeInsets.symmetric(vertical: 6),
