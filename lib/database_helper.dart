@@ -38,11 +38,37 @@ class DatabaseHelper {
     return db.query('tarefas'); // SELECT * FROM tarefas
   }
 
+  //Create: Inserir tarefa no banco de dados
   static Future<void> inserirTarefa(String titulo) async{
     final db = await DatabaseHelper.database;
     await db.insert('tarefas', {
         'titulo':titulo,
         'situacao':0, //0 = False, 1 = verdadeiro (SQLite não tem boolean)
     });
+  }
+
+  //Update: Alterar o campo marcado da tarefa
+  static Future<void> atualizarSituacao(int id, int situacao) async{
+
+    final db = await DatabaseHelper.database;
+    await db.update(
+      'tarefas',
+      { 'situacao': situacao},
+      where: 'id = ?',
+      whereArgs: [id],
+
+      ); 
+  }
+
+  //Delete: Remover uma tarefa
+  static Future<void> removerSituacao(int id) async{
+
+    final db = await DatabaseHelper.database;
+    await db.delete(
+      'tarefas',
+      where: 'id = ?',
+      whereArgs: [id],
+
+      ); 
   }
 }

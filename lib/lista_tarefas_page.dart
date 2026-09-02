@@ -32,17 +32,29 @@ class _ListaTarefaState extends State<ListaTarefa> {
 
   //Marcar tarefa como concluida/Pendente
 
-  void marcarSituacao(int index){
-    setState(() {
-      tarefas[index]['situacao'] = !tarefas[index]['situacao'];
-    });
+  Future<void> marcarSituacao(int index) async {
+    
+    final tarefa = tarefas[index];
+    final novaSituacao = tarefa['situacao'] == 1 ? 0 : 1;
+
+    await DatabaseHelper.atualizarSituacao(
+      tarefa['id'],
+      novaSituacao,
+    );
+
+    carregarTarefas();
   }
 
   //Remover tarefa
-  void removerTarefa(int index){
-    setState(() {
-      tarefas.removeAt(index);
-    });
+  Future<void> removerTarefa(int index) async {
+    final tarefa = tarefas[index];
+
+    await DatabaseHelper.removerSituacao(
+      tarefa['id'],
+      
+    );
+
+    carregarTarefas();
   }
 
   //Adicionar Tarefa
@@ -93,7 +105,7 @@ class _ListaTarefaState extends State<ListaTarefa> {
       body: tarefas.isEmpty 
         ? Center(
           child: Text(
-            'Nenhuma Tarefa Encontrada',
+            'Nenhuma Tarefa Encontrada. Toque em + para adicionar',
             style: TextStyle(fontSize: 20, color: Colors.grey),
           ),
         )
