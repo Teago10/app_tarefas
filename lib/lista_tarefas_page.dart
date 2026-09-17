@@ -17,6 +17,8 @@ class _ListaTarefaState extends State<ListaTarefa> {
 
   String? filtroAtual;
 
+  static const categorias = ['Pessoal', 'Trabalho', 'Estudo', 'Compras'];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -67,36 +69,68 @@ class _ListaTarefaState extends State<ListaTarefa> {
   //Adicionar Tarefa
   void adicionarTarefa() {
     final adicinarController = TextEditingController();
+    String categoriaEscolhida = categorias.first;
 
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Nova Tarefa'),
-          content: TextField(
-            controller: adicinarController,
-            decoration: InputDecoration(hintText: 'Digite sua Tarefa'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (adicinarController.text.isNotEmpty) {
-                  await DatabaseHelper.inserirTarefa(adicinarController.text);
+        return StatefulBuilder(
+          builder: (context, setStateDiaLog) {
+            return AlertDialog(
+              title: Text('Nova Tarefa'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: adicinarController,
+                    decoration: InputDecoration(hintText: 'Digite sua Tarefa'),
+                  ),
+                  SizedBox(height: 12,),
 
-                  carregarTarefas();
-
-                  if (!context.mounted) return;
-
-                  Navigator.pop(context);
-                }
-              },
-              child: Text('Adicionar'),
-            ),
-          ],
+                  DropdownButton<String>(
+                    value: categoriaEscolhida,
+                    isExpanded: true,
+                    items: categorias.map((cat) {
+                      return DropdownMenuItem(
+                        value: cat, 
+                        child: Text(cat),
+                        );
+                    }).toList(),
+                    
+                    onChanged: (novaCategoria) {
+                      setStateDiaLog(
+                        () {
+                          categoriaEscolhida = novaCategoria!;
+                        },);
+                    },
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancelar'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (adicinarController.text.isNotEmpty) {
+                      await DatabaseHelper.inserirTarefa(
+                        adicinarController.text,
+                        categoriaEscolhida,
+                        );
+            
+                      carregarTarefas();
+            
+                      if (!context.mounted) return;
+            
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: Text('Adicionar'),
+                ),
+              ],
+            );
+          }
         );
       },
     );
@@ -172,6 +206,7 @@ class _ListaTarefaState extends State<ListaTarefa> {
               itemBuilder: (context, index) {
                 final tarefa = tarefas[index];
                 final bool situacao = tarefa['situacao'] == 1;
+                final String categoria = tarefa['categoria'] ?? 'Sem categoria';
 
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 6),
@@ -191,7 +226,9 @@ class _ListaTarefaState extends State<ListaTarefa> {
                             : TextDecoration.none,
                       ),
                     ),
-                    subtitle: situacao ? Text('Concluida') : Text('Pendente'),
+                    subtitle: Text(
+                      '${situacao ? 'Concluida' : 'Pendente'} - $categoria'
+                    ),
                     trailing: GestureDetector(
                       onTap: () => removerTarefa(index),
                       child: Icon(
